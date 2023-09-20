@@ -3,9 +3,9 @@
 
 int main(void)
 {
-	pid_t ppid = getppid();
+    pid_t ppid = getppid();
 
-	printf("%i\n", ppid);
+    printf("%i\n", ppid);
 
-	return (0);
+    return (0);
 }

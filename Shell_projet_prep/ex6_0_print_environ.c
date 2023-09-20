@@ -4,18 +4,18 @@ extern char **environ;
 
 void print_environ(void)
 {
-	int i = 0;
+    int i = 0;
 
-	while (environ[i])
-	{
-		printf("%s\n", environ[i]);
-		i++;
-	}
+    while (environ[i])
+    {
+        printf("%s\n", environ[i]);
+        i++;
+    }
 }
 
 int main()
 {
-	print_environ();
+    print_environ();
 
-	return (0);
+    return (0);
 }

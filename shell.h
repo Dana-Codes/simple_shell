@@ -10,7 +10,6 @@
 #include <string.h>
 #include <errno.h>
 
-
 char **split_string(char *string, char *separators);
 unsigned int count_tokens(char *string, char *separators, unsigned int len);
 void free_pointers_array(char **array);
