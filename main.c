@@ -1,48 +1,105 @@
 #include "shell.h"
 
+extern char **environ;
+
 /**
-  * main - Entry point to the Shell
-  *
-  * Return: Always zero.
-  */
+ * main - Build a simple shell like sh
+ *
+ * Return: 0;
+ */
 int main(void)
 {
-	char *line = NULL, **u_tokns = NULL;
-	int w_len = 0, execFlag = 0;
-	size_t line_size = 0;
-	ssize_t line_len = 0;
+	int foo;
+	char *command = NULL;
+	size_t len = 0;
+	char **args = NULL;
 
-	while (line_len >= 0)
+	while (1)
 	{
-		signal(SIGINT, signal_handler);
-		if (isatty(STDIN_FILENO))
-			write(STDOUT_FILENO, "($) ", 4);
-		line_len = getline(&line, &line_size, stdin);
-		if (line_len == -1)
+		if (isatty(0))
+			printf("$ ");
+
+		foo = getline(&command, &len, stdin);
+		if (foo == -1)
 		{
-			if (isatty(STDIN_FILENO))
-				write(STDOUT_FILENO, "\n", 1);
-			break;
+			free(command);
+			exit(0);
 		}
-
-		w_len = count_input(line);
-		if (line[0] != '\n' && w_len > 0)
+		command[foo - 1] = '\0';
+		args = split_string(command, " ");
+		if (args[0] == NULL || handle_args(args) != 0)
 		{
-			u_tokns = tokenize(line, " \t", w_len);
-			execFlag = execBuiltInCommands(u_tokns, line);
-			if (!execFlag)
-			{
-				u_tokns[0] = find(u_tokns[0]);
-				if (u_tokns[0] && access(u_tokns[0], X_OK) == 0)
-					exec(u_tokns[0], u_tokns);
-				else
-					perror("./hsh");
-			}
+			free(command);
+			command = NULL;
+			free(args);
+			continue;
+		}
+		_execute(args, command);
+		free_pointers_array(args);
+	}
+	free_pointers_array(args);
+	free(command);
+	return (0);
+}
 
-			frees_tokens(u_tokns);
+/**
+ * handle_args - handle special cases
+ * @args: the argv array
+ * Return: return value
+ */
+int handle_args(char **args)
+{
+	int i;
+
+	if (strcmp(args[0], "exit") == 0)
+	{
+		if (args[1])
+			exit(atoi(args[1]));
+		exit(0);
+	}
+	else if (strcmp(args[0], "env") == 0)
+	{
+		for (i = 0; environ[i] != NULL; i++)
+			printf("%s\n", environ[i]);
+		return (1);
+	}
+	else
+		return (handle_path(args));
+}
+/**
+ * _execute - execute the command
+ * @args: the argv array
+ * @command: the prompt the user typed
+ * Return: nothing
+ */
+void _execute(char **args, char *command)
+{
+	int foo;
+	pid_t pid;
+
+	pid = fork();
+	if (pid == -1)
+	{
+		free(command);
+		command = NULL;
+		free_pointers_array(args);
+		perror("Fork");
+		exit(errno);
+	}
+	else if (pid == 0)
+	{
+		foo = execve(args[0], args, environ);
+		if (foo == -1)
+		{
+			free(command);
+			free_pointers_array(args);
+			perror("./hsh: 1");
+			exit(errno);
 		}
 	}
+	else
+	{
+		wait(NULL);
+	}
 
-	free(line);
-	return (0);
 }
